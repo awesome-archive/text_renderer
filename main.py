@@ -3,12 +3,20 @@
 """
 Generate training and test images.
 """
+import os
+
+# prevent opencv use all cpus
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+
 import traceback
 import numpy as np
 
 import multiprocessing as mp
 from itertools import repeat
-import os
 
 import cv2
 
@@ -17,7 +25,7 @@ from libs.timer import Timer
 from parse_args import parse_args
 import libs.utils as utils
 import libs.font_utils as font_utils
-from textrenderer.corpus import RandomCorpus, ChnCorpus, EngCorpus, get_corpus
+from textrenderer.corpus.corpus_utils import corpus_factory
 from textrenderer.renderer import Renderer
 from tenacity import retry
 
@@ -28,10 +36,10 @@ STOP_TOKEN = 'kill'
 flags = parse_args()
 cfg = load_config(flags.config_file)
 
-fonts = font_utils.get_font_paths(flags.fonts_dir)
+fonts = font_utils.get_font_paths_from_list(flags.fonts_list)
 bgs = utils.load_bgs(flags.bg_dir)
 
-corpus = get_corpus(flags.corpus_mode, flags.chars_file, flags.corpus_dir, flags.length)
+corpus = corpus_factory(flags.corpus_mode, flags.chars_file, flags.corpus_dir, flags.length)
 
 renderer = Renderer(corpus, fonts, bgs, cfg,
                     height=flags.img_height,
@@ -62,20 +70,21 @@ def start_listen(q, fname):
 
 
 @retry
-def gen_img_retry(renderer):
+def gen_img_retry(renderer, img_index):
     try:
-        return renderer.gen_img()
-    except Exception:
-        print("Retry gen_img")
+        return renderer.gen_img(img_index)
+    except Exception as e:
+        print("Retry gen_img: %s" % str(e))
+        traceback.print_exc()
         raise Exception
 
 
-def generate_img(img_index, q):
+def generate_img(img_index, q=None):
     global flags, lock, counter
     # Make sure different process has different random seed
     np.random.seed()
 
-    im, word = gen_img_retry(renderer)
+    im, word = gen_img_retry(renderer, img_index)
 
     base_name = '{:08d}'.format(img_index)
 
@@ -84,7 +93,9 @@ def generate_img(img_index, q):
         cv2.imwrite(fname, im)
 
         label = "{} {}".format(base_name, word)
-        q.put(label)
+
+        if q is not None:
+            q.put(label)
 
         with lock:
             counter.value += 1
@@ -120,7 +131,20 @@ def restore_exist_labels(label_path):
     return start_index
 
 
+def get_num_processes(flags):
+    processes = flags.num_processes
+    if processes is None:
+        processes = max(os.cpu_count(), 2)
+    return processes
+
+
 if __name__ == "__main__":
+    # It seems there are some problems when using opencv in multiprocessing fork way
+    # https://github.com/opencv/opencv/issues/5150#issuecomment-161371095
+    # https://github.com/pytorch/pytorch/issues/3492#issuecomment-382660636
+    if utils.get_platform() == "OS X":
+        mp.set_start_method('spawn', force=True)
+
     if flags.viz == 1:
         flags.num_processes = 1
 
@@ -134,7 +158,7 @@ if __name__ == "__main__":
 
     timer = Timer(Timer.SECOND)
     timer.start()
-    with mp.Pool(processes=flags.num_processes) as pool:
+    with mp.Pool(processes=get_num_processes(flags)) as pool:
         if not flags.viz:
             pool.apply_async(start_listen, (q, tmp_label_path))
 

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import hashlib
+import sys
 
 
 def viz_img(text_im, fignum=1):
@@ -83,7 +84,7 @@ def load_bgs(bg_dir):
             image_path = os.path.join(root, file_name)
 
             # For load non-ascii image_path on Windows
-            bg = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+            bg = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_COLOR)
 
             dst.append(bg)
 
@@ -125,6 +126,19 @@ def apply(cfg_item):
         return True
 
     return False
+
+
+def get_platform():
+    platforms = {
+        'linux1': 'Linux',
+        'linux2': 'Linux',
+        'darwin': 'OS X',
+        'win32': 'Windows'
+    }
+    if sys.platform not in platforms:
+        return sys.platform
+
+    return platforms[sys.platform]
 
 
 if __name__ == '__main__':

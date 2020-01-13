@@ -11,6 +11,7 @@ from .utils import md5, load_chars
 
 def get_font_paths(fonts_dir):
     """
+    Load font path recursively from a folder
     :param fonts_dir: folder contains ttf、otf or ttc format font
     :return: path of all fonts
     """
@@ -22,6 +23,20 @@ def get_font_paths(fonts_dir):
     if len(fonts) == 0:
         print("Not found fonts in fonts_dir")
         exit(-1)
+    return fonts
+
+
+def get_font_paths_from_list(list_filename):
+    with open(list_filename,encoding="utf-8") as f:
+        lines = f.readlines()
+        fonts = [os.path.abspath(l.strip()) for l in lines]
+
+        for font in fonts:
+            if not os.path.exists(font):
+                print("Font [%s] not exist." % font)
+                exit(-1)
+
+        print("Total fonts num: %d" % len(lines))
     return fonts
 
 
@@ -51,11 +66,11 @@ def check_font_chars(ttf, charset):
     :param charset: chars
     :return: unsupported_chars, supported_chars
     """
-    chars = chain.from_iterable([y + (Unicode[y[0]],) for y in x.cmap.items()] for x in ttf["cmap"].tables)
-
-    chars_int = []
-    for c in chars:
-        chars_int.append(c[0])
+    #chars = chain.from_iterable([y + (Unicode[y[0]],) for y in x.cmap.items()] for x in ttf["cmap"].tables)
+    chars_int=set()
+    for table in ttf['cmap'].tables:
+        for k,v in table.cmap.items():
+            chars_int.add(k)            
 
     unsupported_chars = []
     supported_chars = []
@@ -74,7 +89,9 @@ def get_fonts_chars(fonts, chars_file):
     loads/saves font supported chars from cache file
     :param fonts: list of font path. e.g ['./data/fonts/msyh.ttc']
     :param chars_file: arg from parse_args
-    :return: dict, key -> font_path, value -> font supported chars
+    :return: dict
+        key -> font_path
+        value -> font supported chars
     """
     out = {}
 
@@ -106,6 +123,25 @@ def get_fonts_chars(fonts, chars_file):
         out[font_path] = supported_chars
 
     return out
+
+
+def get_unsupported_chars(fonts, chars_file):
+    """
+    Get fonts unsupported chars by loads/saves font supported chars from cache file
+    :param fonts:
+    :param chars_file:
+    :return: dict
+        key -> font_path
+        value -> font unsupported chars
+    """
+    charset = load_chars(chars_file)
+    charset = ''.join(charset)
+    fonts_chars = get_fonts_chars(fonts, chars_file)
+    fonts_unsupported_chars = {}
+    for font_path, chars in fonts_chars.items():
+        unsupported_chars = list(filter(lambda x: x not in chars, charset))
+        fonts_unsupported_chars[font_path] = unsupported_chars
+    return fonts_unsupported_chars
 
 
 if __name__ == '__main__':

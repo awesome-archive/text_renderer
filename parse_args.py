@@ -16,8 +16,8 @@ def parse_args():
                              'should less then the width of last CNN layer.')
 
     parser.add_argument('--img_height', type=int, default=32)
-
-    parser.add_argument('--img_width', type=int, default=256)
+    parser.add_argument('--img_width', type=int, default=256,
+                        help="If 0, output images will have different width")
 
     parser.add_argument('--chars_file', type=str, default='./data/chars/chn.txt',
                         help='Chars allowed to be appear in generated images.')
@@ -25,8 +25,8 @@ def parse_args():
     parser.add_argument('--config_file', type=str, default='./configs/default.yaml',
                         help='Set the parameters when rendering images')
 
-    parser.add_argument('--fonts_dir', type=str, default='./data/fonts/chn',
-                        help='Add fonts you want to use in this folder')
+    parser.add_argument('--fonts_list', type=str, default='./data/fonts_list/chn.txt',
+                        help='Fonts file path to use')
 
     parser.add_argument('--bg_dir', type=str, default='./data/bg',
                         help="Some text images(according to your config in yaml file) will"
@@ -36,7 +36,7 @@ def parse_args():
                         help='When corpus_mode is chn or eng, text on image will randomly selected from corpus.'
                              'Recursively find all txt file in corpus_dir')
 
-    parser.add_argument('--corpus_mode', type=str, default='chn', choices=['random', 'chn', 'eng'],
+    parser.add_argument('--corpus_mode', type=str, default='chn', choices=['random', 'chn', 'eng', 'list'],
                         help='Different corpus type have different load/get_sample method'
                              'random: random pick chars from chars file'
                              'chn: pick continuous chars from corpus'
@@ -67,6 +67,9 @@ def parse_args():
 
     if not os.path.exists(flags.save_dir):
         os.makedirs(flags.save_dir)
+
+    if flags.num_processes == 1:
+        parser.error("num_processes min value is 2")
 
     return flags
 

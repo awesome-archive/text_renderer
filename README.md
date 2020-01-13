@@ -3,12 +3,13 @@ Generate text images for training deep learning OCR model (e.g. [CRNN](https://g
 Support both latin and non-latin text.
 
 # Setup
+- Ubuntu 16.04
+- python 3.5+
+
 Install dependencies:
 ```
 pip3 install -r requirements.txt
 ```
-
-The code was only tested on Ubuntu 16.04.
 
 # Demo
 By default, simply run `python3 main.py` will generate 20 text images
@@ -31,17 +32,20 @@ new config file and use it by `--config_file` option), here are some examples:
 |------------|----|
 |Origin(Font size 25)|![origin](./imgs/effects/origin.jpg)|
 |Perspective Transform|![perspective](./imgs/effects/perspective_transform.jpg)|
+|Random Crop|![rand_crop](./imgs/effects/random_crop.jpg)|
+|Curve|![curve](./imgs/effects/curve.jpg)|
 |Light border|![light border](./imgs/effects/light_border.jpg)|
 |Dark border|![dark border](./imgs/effects/dark_border.jpg)|
 |Random char space big|![random char space big](./imgs/effects/random_space_big.jpg)|
 |Random char space small|![random char space small](./imgs/effects/random_space_small.jpg)|
-|Reverse color|![reverse color](./imgs/effects/reverse.jpg)|
-|Blur|![blur](./imgs/effects/blur.jpg)|
-|Font size(15)|![font size 15](./imgs/effects/font_size_15.jpg)|
-|Font size(40)|![font size 40](./imgs/effects/font_size_40.jpg)|
 |Middle line|![middle line](./imgs/effects/line_middle.jpg)|
 |Table line|![table line](./imgs/effects/line_table.jpg)|
 |Under line|![under line](./imgs/effects/line_under.jpg)|
+|Emboss|![emboss](./imgs/effects/emboss.jpg)|
+|Reverse color|![reverse color](./imgs/effects/reverse.jpg)|
+|Blur|![blur](./imgs/effects/blur.jpg)|
+|Text color|![font_color](./imgs/effects/colored.jpg)|
+|Line color|![line_color](./imgs/effects/table.jpg)|
 
 3. Run `main.py` file.
 
